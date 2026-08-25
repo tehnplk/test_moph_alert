@@ -13,8 +13,8 @@
    pip install requests
 
  วิธีใช้งาน:
-   1. กรอก CLIENT_KEY และ SECRET_KEY ของคุณด้านล่าง
-   2. ระบุเลขบัตรประชาชน 13 หลักของผู้รับในตัวแปร TEST_CID
+   1. กรอก CLIENT_KEY และ SECRET_KEY ในไฟล์ .env
+   2. ระบุเลขบัตรประชาชน 13 หลักของผู้รับเป็น CID_1, CID_2, ... ใน .env
    3. รันสคริปต์:  python3 test_moph_alert.py
 
  API Endpoint:
@@ -28,6 +28,7 @@
 """
 
 import os
+import re
 import requests
 import json
 import sys
@@ -41,11 +42,25 @@ load_dotenv()
 # ⚙️  ตั้งค่า Credentials (แก้ไขตรงนี้)
 # ==============================================================================
 
-CLIENT_KEY  = os.getenv("MOPH_CLIENT_KEY", "YOUR_CLIENT_KEY")   # ← ตั้งใน .env
-SECRET_KEY  = os.getenv("MOPH_SECRET_KEY", "YOUR_SECRET_KEY")   # ← ตั้งใน .env
+CLIENT_KEY  = os.getenv("CLIENT_KEY", "")   # ← ตั้งใน .env
+SECRET_KEY  = os.getenv("SECRET_KEY", "")   # ← ตั้งใน .env
+
+
+def load_cids() -> list:
+    """
+    อ่านเลขบัตรประชาชนผู้รับจาก .env ที่ตั้งชื่อเป็น CID_1, CID_2, CID_3, ...
+    เพิ่ม/ลดผู้รับได้โดยแก้ .env อย่างเดียว ไม่ต้องแตะโค้ด
+    """
+    found = []
+    for key, value in os.environ.items():
+        m = re.fullmatch(r"CID_(\d+)", key)
+        if m and value.strip():
+            found.append((int(m.group(1)), value.strip()))
+    return [cid for _, cid in sorted(found)]
+
 
 # เลขบัตรประชาชนของผู้รับ (13 หลัก) — ต้องเป็นบัญชีที่ผูก MOPH Connect แล้ว
-TEST_CID    = os.getenv("MOPH_TEST_CID", "1234567890123")   # ← ตั้งใน .env
+CIDS = load_cids()
 
 # ==============================================================================
 # 🌐  ค่าคงที่ของ API (ปกติไม่ต้องแก้)
@@ -59,10 +74,10 @@ TIMEOUT_SEC = 60    # รอ response สูงสุด 60 วินาที
 # 📦  สร้าง Payload ประเภทต่าง ๆ
 # ==============================================================================
 
-def build_text_payload(cid: str, text: str) -> dict:
+def build_text_payload(cids: list, text: str) -> dict:
     """สร้าง payload แบบ Text ธรรมดา (ง่ายที่สุด)"""
     return {
-        "cid": [cid],
+        "cid": cids,
         "messages": [
             {
                 "type": "text",
@@ -76,7 +91,7 @@ def build_text_payload(cid: str, text: str) -> dict:
     }
 
 
-def build_flex_payload(cid: str, title: str, body: str, hospital_name: str = "โรงพยาบาลตัวอย่าง") -> dict:
+def build_flex_payload(cids: list, title: str, body: str, hospital_name: str = "โรงพยาบาลตัวอย่าง") -> dict:
     """
     สร้าง payload แบบ Flex Message (รองรับ layout / สี / ปุ่ม)
     นี่คือรูปแบบที่ QueueNotify ใช้ส่งแจ้งเตือนคิว
@@ -148,7 +163,7 @@ def build_flex_payload(cid: str, title: str, body: str, hospital_name: str = "�
     }
 
     return {
-        "cid": [cid],
+        "cid": cids,
         "messages": [
             {
                 "type": "flex",
@@ -239,20 +254,24 @@ def validate_config() -> bool:
     """ตรวจสอบว่ากรอก credentials และ CID ครบถ้วนก่อนส่ง"""
     errors = []
 
-    if CLIENT_KEY == "YOUR_CLIENT_KEY" or not CLIENT_KEY:
-        errors.append("กรุณาตั้งค่า CLIENT_KEY ในไฟล์นี้")
+    if not CLIENT_KEY:
+        errors.append("กรุณาตั้งค่า CLIENT_KEY ในไฟล์ .env")
 
-    if SECRET_KEY == "YOUR_SECRET_KEY" or not SECRET_KEY:
-        errors.append("กรุณาตั้งค่า SECRET_KEY ในไฟล์นี้")
+    if not SECRET_KEY:
+        errors.append("กรุณาตั้งค่า SECRET_KEY ในไฟล์ .env")
 
-    if not TEST_CID.isdigit() or len(TEST_CID) != 13:
-        errors.append(f"TEST_CID ต้องเป็นตัวเลข 13 หลัก (ปัจจุบัน: '{TEST_CID}')")
+    if not CIDS:
+        errors.append("ไม่พบผู้รับ — กรุณาตั้ง CID_1 (และ CID_2, CID_3, ...) ในไฟล์ .env")
+
+    for i, cid in enumerate(CIDS, start=1):
+        if not cid.isdigit() or len(cid) != 13:
+            errors.append(f"CID ลำดับที่ {i} ต้องเป็นตัวเลข 13 หลัก (ปัจจุบัน: '{cid}')")
 
     if errors:
         print("\n⚠️  พบข้อผิดพลาดในการตั้งค่า:")
         for err in errors:
             print(f"  ❌ {err}")
-        print("\n👉 แก้ไขตัวแปรที่ด้านบนของไฟล์ test_moph_alert.py แล้วลองใหม่\n")
+        print("\n👉 แก้ไขไฟล์ .env แล้วลองใหม่\n")
         return False
 
     return True
@@ -272,6 +291,8 @@ def main():
     if not validate_config():
         sys.exit(1)
 
+    print(f"\n👥 ผู้รับ {len(CIDS)} ราย: {', '.join(CIDS)}")
+
     # ────────────────────────────────────────────────
     # TEST 1: Text Message (แบบง่าย)
     # ────────────────────────────────────────────────
@@ -279,7 +300,7 @@ def main():
     print("-" * 40)
 
     text_payload = build_text_payload(
-        cid=TEST_CID,
+        cids=CIDS,
         text="สวัสดีครับ! นี่คือข้อความทดสอบจากระบบ MOPH Alert v3.1",
     )
 
@@ -297,7 +318,7 @@ def main():
     print("-" * 40)
 
     flex_payload = build_flex_payload(
-        cid=TEST_CID,
+        cids=CIDS,
         title="แจ้งเตือนคิวใกล้ถึงแล้ว",
         body="ขณะนี้ท่านอยู่ในลำดับที่ 3\nกรุณาเตรียมตัวและมาที่จุดบริการ",
         hospital_name="โรงพยาบาลตัวอย่าง",
@@ -330,6 +351,6 @@ def main():
 if __name__ == "__main__":
     # ถ้าต้องการแค่ดู payload โดยไม่ยิงจริง ให้เปลี่ยน dry_run=True
     # ตัวอย่าง:
-    #   payload = build_flex_payload(TEST_CID, "ทดสอบ", "เนื้อหา")
+    #   payload = build_flex_payload(CIDS, "ทดสอบ", "เนื้อหา")
     #   send_alert(payload, dry_run=True)
     main()
