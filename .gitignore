@@ -1,0 +1,14 @@
+# credentials / ข้อมูลลับ — ห้าม commit เด็ดขาด
+.env
+.env.*
+!.env.example
+token.txt
+*.key
+
+# virtualenv
+.venv/
+venv/
+
+# python
+__pycache__/
+*.py[cod]
