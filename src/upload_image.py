@@ -8,7 +8,7 @@ host ที่ลองตามลำดับ (ไม่ต้องสมั�
   2. 0x0.st        — สำรอง ไฟล์หมดอายุตามขนาด
   3. tmpfiles.org  — สำรอง อยู่ 1 ชม.
 
-ใช้:  python upload_image.py <ไฟล์รูป> [ไฟล์รูปเพิ่มเติม ...]
+ใช้:  python src/upload_image.py <ไฟล์รูป> [ไฟล์รูปเพิ่มเติม ...]
 """
 import sys
 import requests

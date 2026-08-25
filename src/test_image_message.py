@@ -8,7 +8,7 @@
 ค่าที่ต้องตั้งใน .env :
   CLIENT_KEY, SECRET_KEY, CID_1 (และ CID_2, CID_3, ... ถ้ามีหลายคน)
 
-รันด้วย:  PYTHONUTF8=1 .venv/Scripts/python.exe test_image_message.py
+รันด้วย:  PYTHONUTF8=1 .venv/Scripts/python.exe src/test_image_message.py
 """
 import os
 import re
@@ -21,7 +21,7 @@ CLIENT_KEY = os.getenv("CLIENT_KEY", "")
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 URL        = "https://morpromt2c.moph.go.th/alert/v3.1/messages"
 
-# URL รูปอ่านจาก .env — อัปโหลดขึ้น host ได้ด้วย  python upload_image.py <ไฟล์>
+# URL รูปอ่านจาก .env — อัปโหลดขึ้น host ได้ด้วย  python src/upload_image.py <ไฟล์>
 # LINE บังคับ HTTPS และจำกัด preview ไม่เกิน 1 MB จึงต้องใช้ไฟล์ย่อแยกต่างหาก
 IMG         = os.getenv("IMG_URL", "")          # ต้นฉบับ (ไม่เกิน 10 MB)
 IMG_PREVIEW = os.getenv("IMG_PREVIEW_URL", "")  # รูปย่อ (ไม่เกิน 1 MB)
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     if not IMG or not IMG_PREVIEW:
         raise SystemExit(
             "❌ กรุณาตั้ง IMG_URL และ IMG_PREVIEW_URL ในไฟล์ .env\n"
-            "   สร้างได้ด้วย:  python upload_image.py <รูปต้นฉบับ> <รูปย่อ>"
+            "   สร้างได้ด้วย:  python src/upload_image.py <รูปต้นฉบับ> <รูปย่อ>"
         )
 
     print(f"👥 ผู้รับ {len(CIDS)} ราย: {', '.join(CIDS)}")

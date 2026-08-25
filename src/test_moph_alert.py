@@ -15,7 +15,7 @@
  วิธีใช้งาน:
    1. กรอก CLIENT_KEY และ SECRET_KEY ในไฟล์ .env
    2. ระบุเลขบัตรประชาชน 13 หลักของผู้รับเป็น CID_1, CID_2, ... ใน .env
-   3. รันสคริปต์:  python3 test_moph_alert.py
+   3. รันสคริปต์:  PYTHONUTF8=1 .venv/Scripts/python.exe src/test_moph_alert.py
 
  API Endpoint:
    POST https://morpromt2c.moph.go.th/alert/v3.1/messages

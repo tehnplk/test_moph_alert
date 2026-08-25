@@ -9,7 +9,7 @@
 ค่าที่ต้องตั้งใน .env :
   CLIENT_KEY, SECRET_KEY, CID_1 (CID_2, ...), IMG_URL, IMG_PREVIEW_URL
 
-รันด้วย:  PYTHONUTF8=1 .venv/Scripts/python.exe send_dengue_alert.py
+รันด้วย:  PYTHONUTF8=1 .venv/Scripts/python.exe src/send_dengue_alert.py
 เพิ่ม --dry-run เพื่อดู payload โดยไม่ส่งจริง
 """
 import os
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     if not IMG:
         raise SystemExit(
             "❌ กรุณาตั้ง IMG_URL ในไฟล์ .env\n"
-            "   สร้างได้ด้วย:  python upload_image.py <รูปต้นฉบับ> <รูปย่อ>"
+            "   สร้างได้ด้วย:  python src/upload_image.py <รูปต้นฉบับ> <รูปย่อ>"
         )
 
     payload = build_payload(CIDS)
