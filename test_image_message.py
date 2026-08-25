@@ -21,8 +21,10 @@ CLIENT_KEY = os.getenv("CLIENT_KEY", "")
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 URL        = "https://morpromt2c.moph.go.th/alert/v3.1/messages"
 
-# รูปสาธารณะของ สธ. เอง (อ้างอิงจากตัวอย่างในคู่มือ API MOPH Alert)
-IMG = "https://phr1.moph.go.th/moph_account_center1.png"
+# URL รูปอ่านจาก .env — อัปโหลดขึ้น host ได้ด้วย  python upload_image.py <ไฟล์>
+# LINE บังคับ HTTPS และจำกัด preview ไม่เกิน 1 MB จึงต้องใช้ไฟล์ย่อแยกต่างหาก
+IMG         = os.getenv("IMG_URL", "")          # ต้นฉบับ (ไม่เกิน 10 MB)
+IMG_PREVIEW = os.getenv("IMG_PREVIEW_URL", "")  # รูปย่อ (ไม่เกิน 1 MB)
 
 HEADERS = {
     "Content-Type": "application/json",
@@ -60,12 +62,12 @@ def build_image_payload(cids: list) -> dict:
             {
                 "type": "image",
                 "originalContentUrl": IMG,
-                "previewImageUrl": IMG,
+                "previewImageUrl": IMG_PREVIEW,
             }
         ],
-        "message_title": "ทดสอบส่งรูป (standalone image)",
-        "message_html":  f'<p>ทดสอบส่งรูป</p><img src="{IMG}" style="max-width:100%">',
-        "message_text":  "ทดสอบส่งรูปแบบ image message",
+        "message_title": "3 เก็บ 3 ป้องกัน — ป้องกันโรคจากยุงลาย",
+        "message_html":  f'<p>3 เก็บ 3 ป้องกัน ป้องกันโรคจากยุงลาย</p><img src="{IMG}" style="max-width:100%">',
+        "message_text":  "3 เก็บ 3 ป้องกัน — เก็บบ้าน เก็บขยะ เก็บน้ำ ป้องกันไข้เลือดออก ไข้ปวดข้อยุงลาย และโรคติดเชื้อไวรัสซิกา",
         "message_type":  "HPT",
     }
 
@@ -77,14 +79,14 @@ def build_flex_image_payload(cids: list) -> dict:
         "messages": [
             {
                 "type": "flex",
-                "altText": "ทดสอบส่งรูปแบบ flex hero",
+                "altText": "3 เก็บ 3 ป้องกัน — ป้องกันโรคจากยุงลาย",
                 "contents": {
                     "type": "bubble",
                     "hero": {
                         "type": "image",
                         "url": IMG,
                         "size": "full",
-                        "aspectRatio": "20:9",
+                        "aspectRatio": "2:3",
                         "aspectMode": "cover",
                     },
                     "body": {
@@ -93,7 +95,7 @@ def build_flex_image_payload(cids: list) -> dict:
                         "contents": [
                             {
                                 "type": "text",
-                                "text": "ทดสอบส่งรูปผ่าน Flex hero image",
+                                "text": "3 เก็บ 3 ป้องกัน\nเก็บบ้าน เก็บขยะ เก็บน้ำ ทุกสัปดาห์",
                                 "wrap": True,
                                 "weight": "bold",
                             }
@@ -102,9 +104,9 @@ def build_flex_image_payload(cids: list) -> dict:
                 },
             }
         ],
-        "message_title": "ทดสอบส่งรูป (flex hero)",
-        "message_html":  f'<p>ทดสอบ flex hero</p><img src="{IMG}" style="max-width:100%">',
-        "message_text":  "ทดสอบส่งรูปแบบ flex hero image",
+        "message_title": "3 เก็บ 3 ป้องกัน (flex)",
+        "message_html":  f'<p>3 เก็บ 3 ป้องกัน ป้องกันโรคจากยุงลาย</p><img src="{IMG}" style="max-width:100%">',
+        "message_text":  "3 เก็บ 3 ป้องกัน — เก็บบ้าน เก็บขยะ เก็บน้ำ ทุกสัปดาห์",
         "message_type":  "HPT",
     }
 
@@ -114,9 +116,15 @@ if __name__ == "__main__":
         raise SystemExit("❌ กรุณาตั้ง CLIENT_KEY และ SECRET_KEY ในไฟล์ .env")
     if not CIDS:
         raise SystemExit("❌ ไม่พบผู้รับ — กรุณาตั้ง CID_1 (และ CID_2, ...) ในไฟล์ .env")
+    if not IMG or not IMG_PREVIEW:
+        raise SystemExit(
+            "❌ กรุณาตั้ง IMG_URL และ IMG_PREVIEW_URL ในไฟล์ .env\n"
+            "   สร้างได้ด้วย:  python upload_image.py <รูปต้นฉบับ> <รูปย่อ>"
+        )
 
     print(f"👥 ผู้รับ {len(CIDS)} ราย: {', '.join(CIDS)}")
-    print(f"🖼️  IMG: {IMG}")
+    print(f"🖼️  original: {IMG}")
+    print(f"🖼️  preview : {IMG_PREVIEW}")
 
     ra = post("CASE A — standalone image message", build_image_payload(CIDS))
     rb = post("CASE B — flex + hero image", build_flex_image_payload(CIDS))
